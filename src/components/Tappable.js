@@ -1,12 +1,8 @@
 import './styles/tappable.less';
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
 
-const activeClass = 'tappable-active';
-const inactiveClass = 'tappable-inactive';
-const pressedClass = 'tappable-pressed';
-const pressDelay = 2;
-
+const asMilliseconds = 1000;
 const isWithinBounds = (value, lower, upper) => lower <= value && value <= upper;
 
 class Tappable extends Component {
@@ -17,8 +13,13 @@ class Tappable extends Component {
       timer: undefined,
       pressed: false,
       active: false,
-    }
+    };
   }
+
+  static defaultProps = {
+    className: 'tappable',
+    pressDelay: 2,
+  };
 
   componentWillMount = () => {
     window.addEventListener('mouseup', this.onMouseUp);
@@ -40,9 +41,8 @@ class Tappable extends Component {
   }
 
   onTouchStart = evt => {
-    console.log('Touch Start');
     this.handleEvent(evt);
-
+console.log('Touch start', evt.changedTouches[0]);
     if (evt.touches.length !== 1) {
       return;
     }
@@ -51,7 +51,6 @@ class Tappable extends Component {
   }
 
   onTouchEnd = evt => {
-    console.log('Touch End');
     this.handleEvent(evt);
 
     if (evt.changedTouches.length !== 1 || evt.touches.length !== 0) {
@@ -62,30 +61,22 @@ class Tappable extends Component {
   }
 
   onMouseDown = evt => {
-    console.log('Mouse Down');
     this.handleEvent(evt);
 
     this.startInteraction();
   }
 
   onMouseUp = evt => {
-    //console.log('Mouse Up', evt.pageX);
-    //this.handleEvent(evt);
-
     this.endInteraction(evt.target, evt);
   }
 
   startInteraction = () => {
     if (!this.state.timer) {
       const timer = setTimeout(() => {
-          this.setState({
-            pressed: true,
-          });
-          console.log('Timer fired');
-        },
-        pressDelay * 1000);
-      this.setState({timer});
-      console.log('Timer started');
+        this.setState({ pressed: true });
+      }, this.props.pressDelay * asMilliseconds);
+
+      this.setState({ timer });
     }
 
     this.setState({
@@ -95,7 +86,7 @@ class Tappable extends Component {
 
   endInteraction = (target, { pageX, pageY }) => {
     if (!this.state.active) {
-      return
+      return;
     }
 
     const { pressed } = this.state;
@@ -113,14 +104,17 @@ class Tappable extends Component {
       return;
     }
 
-    console.log(pressed ? 'Pressed' : 'Tapped');
+    if (this.props.onTap) window.setTimeout(this.props.onTap, 0);
+    if (pressed && this.props.onPress) window.setTimeout(this.props.onPress, 0);
   }
 
   render = () => {
-    const classes = classnames('tappable', this.props.className, {
-      [inactiveClass]: !this.state.active,
-      [activeClass]: this.state.active && !this.state.pressed,
-      [pressedClass]: this.state.pressed,
+    const { className } = this.props;
+
+    const classes = classnames(className, {
+      [className + '-inactive']: !this.state.active,
+      [className + '-active']: this.state.active && !this.state.pressed,
+      [className + '-pressed']: this.state.pressed,
     });
 
     return (
@@ -132,6 +126,16 @@ class Tappable extends Component {
       </div>
     );
   }
-};
+
+  static propTypes() {
+    return {
+      onTap: PropTypes.func,
+      onPress: PropTypes.func,
+      pressDelay: PropTypes.number,
+      className: PropTypes.string,
+      children: PropTypes.object.isRequired,
+    };
+  }
+}
 
 export default Tappable;
