@@ -6,18 +6,16 @@ const asMilliseconds = 1000;
 const isWithinBounds = (value, lower, upper) => lower <= value && value <= upper;
 
 class Tappable extends Component {
-
-
   constructor(props) {
     super(props);
 
     this.state = {
-      timer: undefined,
       pressed: false,
       active: false,
     };
 
     this.touches = [];
+    this.timer = undefined;
   }
 
   static defaultProps = {
@@ -32,16 +30,16 @@ class Tappable extends Component {
   componentWillUnmount = () => {
     this.cancelTimeout();
     this.setState({
-      timer: undefined,
       pressed: false,
       active: false,
-    })
+    });
 
     window.removeEventListener('mouseup', this.onMouseUp);
   }
 
   cancelTimeout = () => {
-    window.clearTimeout(this.state.timer);
+    window.clearTimeout(this.timer);
+    this.timer = undefined;
   }
 
   handleEvent = evt => {
@@ -58,22 +56,20 @@ class Tappable extends Component {
       this.touches.push(identifier);
     }
 
-    console.log('Tap start', this.touches);
-
     this.startInteraction();
   }
 
   onTouchEnd = evt => {
     this.handleEvent(evt);
+    const touch = evt.changedTouches[0];
 
-    this.touches = this.touches.filter(x => x !== evt.changedTouches[0].identifier);
-    console.log('Tap end', this.touches);
+    this.touches = this.touches.filter(x => x !== touch.identifier);
 
     if (this.touches.length !== 0) {
       return;
     }
 
-    this.endInteraction(evt.target, evt.changedTouches[0]);
+    this.endInteraction(evt.target, touch);
   }
 
   onMouseDown = evt => {
@@ -87,20 +83,14 @@ class Tappable extends Component {
   }
 
   startInteraction = () => {
-    if (!this.state.timer) {
-      const timer = setTimeout(() => {
-        this.setState({
-          timer: undefined,
-          pressed: true,
-        });
+    if (!this.timer) {
+      this.timer = setTimeout(() => {
+        this.setState({ pressed: true });
+        this.timer = undefined;
       }, this.props.pressDelay * asMilliseconds);
-
-      this.setState({ timer });
     }
 
-    this.setState({
-      active: true,
-    });
+    this.setState({ active: true });
   }
 
   endInteraction = (target, { pageX, pageY }) => {
@@ -111,7 +101,6 @@ class Tappable extends Component {
     const { pressed } = this.state;
     this.cancelTimeout();
     this.setState({
-      timer: undefined,
       pressed: false,
       active: false,
     });
