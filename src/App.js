@@ -4,6 +4,12 @@ import './App.css';
 import Tappable from './components/Tappable';
 
 class App extends Component {
+  constructor() {
+    super();
+    
+    this.state = {toggled: true};
+  }
+
   render() {
     return (
       <div className="App">
@@ -17,7 +23,17 @@ class App extends Component {
 
         <div>
           <Tappable>Click me</Tappable>
-          <Tappable className='foo'>And me!</Tappable>
+          <Tappable onTap={() => {
+            console.log('Tap 1');
+            this.setState({toggled: !this.state.toggled});
+          }} className='foo'>And me!</Tappable>
+          {
+            this.state.toggled &&
+            <Tappable onTap={() => console.log('Tap 2')} className='foo'>Hello</Tappable>
+          }
+        </div>
+
+        <div>
         </div>
       </div>
     );

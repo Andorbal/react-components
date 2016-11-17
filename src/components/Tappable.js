@@ -6,6 +6,8 @@ const asMilliseconds = 1000;
 const isWithinBounds = (value, lower, upper) => lower <= value && value <= upper;
 
 class Tappable extends Component {
+
+
   constructor(props) {
     super(props);
 
@@ -14,6 +16,8 @@ class Tappable extends Component {
       pressed: false,
       active: false,
     };
+
+    this.touches = [];
   }
 
   static defaultProps = {
@@ -27,8 +31,13 @@ class Tappable extends Component {
 
   componentWillUnmount = () => {
     this.cancelTimeout();
+    this.setState({
+      timer: undefined,
+      pressed: false,
+      active: false,
+    })
 
-    window.addEventListener('mouseup', this.onMouseUp);
+    window.removeEventListener('mouseup', this.onMouseUp);
   }
 
   cancelTimeout = () => {
@@ -42,10 +51,14 @@ class Tappable extends Component {
 
   onTouchStart = evt => {
     this.handleEvent(evt);
-console.log('Touch start', evt.changedTouches[0]);
-    if (evt.touches.length !== 1) {
-      return;
+
+    const { identifier } = evt.changedTouches[0];
+
+    if (!this.touches.includes(identifier)) {
+      this.touches.push(identifier);
     }
+
+    console.log('Tap start', this.touches);
 
     this.startInteraction();
   }
@@ -53,7 +66,10 @@ console.log('Touch start', evt.changedTouches[0]);
   onTouchEnd = evt => {
     this.handleEvent(evt);
 
-    if (evt.changedTouches.length !== 1 || evt.touches.length !== 0) {
+    this.touches = this.touches.filter(x => x !== evt.changedTouches[0].identifier);
+    console.log('Tap end', this.touches);
+
+    if (this.touches.length !== 0) {
       return;
     }
 
@@ -73,7 +89,10 @@ console.log('Touch start', evt.changedTouches[0]);
   startInteraction = () => {
     if (!this.state.timer) {
       const timer = setTimeout(() => {
-        this.setState({ pressed: true });
+        this.setState({
+          timer: undefined,
+          pressed: true,
+        });
       }, this.props.pressDelay * asMilliseconds);
 
       this.setState({ timer });

@@ -31,3 +31,12 @@
   border-radius: 1em;
   overflow: hidden;
 }
+
+.foo-active {
+  background-color: blue;
+  color: white;
+}
+
+.foo-pressed {
+  background-color: green;
+}
